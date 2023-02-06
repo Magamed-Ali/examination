@@ -1,47 +1,48 @@
-import React, {useState, MouseEvent, ChangeEvent} from 'react';
+import React, { ChangeEvent, useState } from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 
-function Notes() {
-    const [newNote, setNewNote] = useState<string>("")
-    const [notes, setNotes] = useState<Array<string>>([])
-    const onChangeHandler = (e: ChangeEvent<HTMLTextAreaElement> )=>
-        setNewNote(e.currentTarget.value)
-    const addNote = () => {
-        setNotes([newNote, ...notes])
-        setNewNote("")
+function LongCommentChecker() {
+    const minSizeComment = 5
+    const [isCommentReady, setIsCommentReady] = useState<boolean>(false)
+    const [comment, setComment] = useState<string>('')
+
+    const onClickSendComment = () => {
+        if (comment.length > minSizeComment) {
+            setComment('')
+        }
     }
+    const onChangeHandler = (e: ChangeEvent<HTMLTextAreaElement>) => {
+        const newComment = e.currentTarget.value
+        if (newComment.length > minSizeComment) {
+            setIsCommentReady(true)
+        } else {
+            setIsCommentReady(false)
+        }
+        setComment(newComment)
+    }
+
     return (
-        <div>
+        <main>
             <textarea
-                value={newNote}
+                placeholder={'Your comment must have more than 5 charters'}
+                value={comment}
                 onChange={onChangeHandler}
-                onBlur={addNote}
             />
             <div>
                 <button
-                     onClick={() => setNotes([])}
-                >Clear notes list</button>
+                    disabled={comment.length < minSizeComment}
+                    onClick={onClickSendComment}>
+                    Send comment
+                </button>
             </div>
-            <h4>Notes:</h4>
-            <div>
-                {notes.map(n => <p>{n}</p>)}
-            </div>
-        </div>
+        </main>
     )
 }
 
-ReactDOM.render(
-    <Notes/>, document.getElementById('root')
-);
-// Что надо написать вместо ххх,
-// чтобы при клике список заметок очищался?
+ReactDOM.render(<LongCommentChecker/>, document.getElementById('root'));
 
-
-
-
-
-
-
-
-
+// Что нужно написать вместо XXX, чтобы кнопка отправки комментария отрабатывала верно:
+// первоначально кнопка должна быть в состоянии disable, а после успешного выполнения условия
+// (комментарий должен быть больше 5 символов) должна раздизаблиться.
+// ❗ Ответ необходимо дать на основании данных (переменных), которые уже есть в коде
