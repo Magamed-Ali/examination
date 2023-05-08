@@ -1,87 +1,118 @@
-
-import {combineReducers, createStore} from "redux";
-import {Provider, useDispatch, useSelector} from 'react-redux'
-import React, {useState, useReducer, useEffect} from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-
-function App() {
-
-    const students = {
-        students: [
-            {id: 1, name: 'Bob'},
-            {id: 2, name: 'Alex'},
-            {id: 3, name: 'Donald'},
-            {id: 4, name: 'Ann'},
-        ]
-    }
-    type RemoveStudentAT = {
-        type: "REMOVE-STUDENT"
-        id: number
-    }
-    const RemoveStudentAC = (id: number): RemoveStudentAT => ({
-        type: "REMOVE-STUDENT",
-        id
-    })
-
-    const studentsReducer = (state = students, action: RemoveStudentAT) => {
-        switch (action.type) {
-            case "REMOVE-STUDENT":
-                return {
-                    ...state,
-                    students: state.students.filter(s => s.id !== action.id)
-                }
-        }
-        return state
-    }
-
-    const store = createStore(studentsReducer)
-    type RootStateType = ReturnType<typeof studentsReducer>
+import React, { useEffect } from 'react'
+import ReactDOM from 'react-dom/client';
+import { applyMiddleware, combineReducers, legacy_createStore as createStore } from 'redux'
+import thunk, { ThunkAction, ThunkDispatch } from 'redux-thunk';
+import { Provider, TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
+import axios from 'axios';
 
 
-    const StudentList = () => {
-        const listItemStyles = {
-            width: "100px",
-            borderBottom: "1px solid gray",
-            cursor: "pointer",
-        }
-        const students = useSelector((state: RootStateType) => state.students)
-        const dispatch = useDispatch()
-        const studentsList = students.map(s => {
-            const removeStudent = () => {
-                dispatch(RemoveStudentAC( s.id))
-            }
-            return (
-                <li key={s.id}
-                    style={listItemStyles}
-                    onClick={removeStudent}>
-                    {s.name}
-                </li>)
-        })
-        return (
-            <ol>
-                {studentsList}
-            </ol>
-
-        )
-    }
-
-
-    ReactDOM.render(<div>
-            <Provider store={store}>
-                <StudentList/>
-            </Provider>
-        </div>,
-        document.getElementById('root')
-    )
-
-
-
-    return (
-        <div>
-
-        </div>
-    );
+// Types
+type CommentType = {
+    postId: string
+    id: string
+    name: string
+    email: string
+    body: string
 }
 
-export default App;
+// Api
+const instance = axios.create({baseURL: 'https://exams-frontend.kimitsu.it-incubator.ru/api/'})
+
+const commentsAPI = {
+    getComments() {
+        return instance.get<CommentType[]>('comments')
+    },
+    createComment() {
+        const payload = {
+            body: 'Это просто заглушка. Backend сам сгенерирует новый комментарий и вернет его вам',
+        }
+        return instance.post('comments', payload)
+    }
+}
+
+// Reducer
+const initState = [] as CommentType[]
+
+type InitStateType = typeof initState
+
+const commentsReducer = (state: InitStateType = initState, action: ActionsType) => {
+    switch (action.type) {
+        case 'COMMENTS/GET-COMMENTS':
+            return action.comments
+        case 'COMMENTS/CREATE-COMMENT':
+            return [action.comment, ...state]
+        default:
+            return state
+    }
+}
+
+
+const getCommentsAC = (comments: CommentType[]) => ({type: 'COMMENTS/GET-COMMENTS', comments} as const)
+const createCommentAC = (comment: CommentType) => ({type: 'COMMENTS/CREATE-COMMENT', comment} as const)
+
+type ActionsType = ReturnType<typeof getCommentsAC> | ReturnType<typeof createCommentAC>
+
+const getCommentsTC = (): AppThunk => (dispatch) => {
+    commentsAPI.getComments()
+        .then((res) => {
+            dispatch(getCommentsAC(res.data))
+        })
+}
+
+const addCommentTC = (): AppThunk => (dispatch) => {
+    commentsAPI.createComment()
+        .then((res) => {
+            dispatch(createCommentAC(res.data))
+        })
+}
+
+// Store
+const rootReducer = combineReducers({
+    comments: commentsReducer,
+})
+
+const store = createStore(rootReducer, applyMiddleware(thunk))
+type RootState = ReturnType<typeof store.getState>
+type AppDispatch = ThunkDispatch<RootState, unknown, ActionsType>
+type AppThunk<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, ActionsType>
+const useAppDispatch = () => useDispatch<AppDispatch>()
+const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
+
+
+// App
+export const App = () => {
+    const dispatch = useAppDispatch()
+    const comments = useAppSelector(state => state.comments)
+
+    useEffect(() => {
+        dispatch(getCommentsTC())
+    }, [])
+
+    const addCommentHandler = () => {
+        alert('Комментарий добавить не получилось. Напишите код самостоятельно 🚀')
+    };
+
+    return (
+        <>
+            <h1>📝 Список комментариев</h1>
+            <button style={{marginBottom: '10px'}}
+                    onClick={addCommentHandler}>Добавить новый комментарий
+            </button>
+            {
+                comments.map(p => {
+                    return <div key={p.id}><b>описание</b>: {p.body}</div>
+                })
+            }
+        </>
+    )
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
+root.render(<Provider store={store}> <App/></Provider>)
+
+// 📜 Описание:
+// При нажатии на кнопку "Добавить новый комментарий" комментарий должен добавиться,
+// но появляется alert.
+// Вместо alerta напишите код, чтобы комментарий добавлялся.
+// Правильную версию строки напишите в качестве ответа.
+// 🖥 Пример ответа: return instance.get<CommentType[]>('comments?_limit=10')
