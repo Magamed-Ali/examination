@@ -1,3 +1,5 @@
+//ReturnType, RootState, unknown, ActionsType
+
 №1
 import axios from 'axios'
 import React, { ChangeEvent, useEffect, useState } from 'react'
@@ -438,7 +440,7 @@ root.render(<Provider store={store}> <App/></Provider>)
 // Найдите ошибку и вставьте исправленную строку кода в качестве ответа.
 
 // 🖥 Пример ответа: const payload = {...currentPost, tile: 'Летим 🚀'}
-№5
+№5   //disabled={p.isDisabled}
 import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client';
 import { applyMiddleware, combineReducers, legacy_createStore as createStore } from 'redux'
