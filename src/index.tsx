@@ -21,7 +21,6 @@ export const Main = () => {
     )
 }
 
-// App
 export const App = () => {
 
     return (
